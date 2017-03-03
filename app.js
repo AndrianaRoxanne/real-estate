@@ -127,8 +127,9 @@ function isGoodDeal(lbcData,maData)
 	var pourcentage= Math.sign((adPricePerSqM-maData)/maData) ;
 	var affaire;
 
-console.log(adPricePerSqM)
-console.log(maData)
+	//console.log(adPricePerSqM)
+	//console.log(maData)
+
 	if(maData>adPricePerSqM)
 		{ affaire = pourcentage + "% en dessous du marché: BONNE AFFAIRE!"}
 	else
@@ -181,14 +182,14 @@ function getMAEstimation(lbcData, routeResponse)
 						
 						routeResponse.render('pages/index', 
 						{
-							msg,lbcData,ref
-							
+							msg,lbcData,ref						
 						}
+
 											)	
 						console.log('affaire; ', msg)
 					}
 				}
-				else{console.log('erreur lors du scrapping de MA')}
+				else{console.log("Erreur lors de l'estimation de MA")}
 		}
 		       )
 	}

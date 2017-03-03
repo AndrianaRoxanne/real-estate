@@ -5,20 +5,26 @@
 <html>
 
 <head>
-	<link rel="stylesheet" href="/assets/css/style.css" />
-	<title> WS3 - Comparatif LeBonCoin </title>
+    <link rel="stylesheet" href="/assets/css/style.css" />
+    <title> WS3 - Comparatif LeBonCoin </title>
 </head>
 
 <body> 
-	<h1> Comparateur de biens immobiliers </h1>
-	<p> Lien LeBonCoin: </p>
+
+    <div id="shape">
+    <h1> Comparateur de biens immobiliers </h1>
+    <p> Lien LeBonCoin: </p>
 <form action="scrape" method="post">
-	<button id="comparer"> Comparer </button>
-	<input class="model" type="text" name="lien" id="lien" placeholder="Site"/>
+    <button id="comparer"> Comparer </button>
+    <input class="model" type="text" name="lien" id="lien" placeholder="Site"/>
+
+
+
+ <!--   <p> Verdict :
+<!--%= msg %> € </p> -->
+<p> Merci de regarder la console... </p>
 </form>
 
-<p>Prix du bien sur LeBonCoin : 
-<%= msg %> € 
-</p>
+</div>
 
 </body>
