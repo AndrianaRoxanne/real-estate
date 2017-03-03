@@ -16,7 +16,7 @@ app.use( '/assets', express.static( 'assets' ) );
 
 
 app.get( '/', function ( req, res ) {
-res.render(__dirname+'/views/pages/index')
+	res.render('pages/index', { error:'Url is empty',msg:"" })
 });
 
 app.use(bodyParser.urlencoded({
@@ -124,16 +124,16 @@ function isGoodDeal(lbcData,maData)
 {
 	//prix de LBC
 	const adPricePerSqM=Math.round(lbcData.price / lbcData.surface);
-	var pourcentage= Math.sign((adPricePerSqM-maData)/maData) ;
+	
 	var affaire;
 
 	//console.log(adPricePerSqM)
 	//console.log(maData)
 
 	if(maData>adPricePerSqM)
-		{ affaire = pourcentage + "% en dessous du marché: BONNE AFFAIRE!"}
+		{ affaire = " BONNE AFFAIRE!"}
 	else
-		{ affaire =	pourcentage + "% au dessus du marché: MAUVAISE AFFAIRE"}
+		{ affaire = " MAUVAISE AFFAIRE..."}
 
 	return affaire;
 }
@@ -182,11 +182,16 @@ function getMAEstimation(lbcData, routeResponse)
 						
 						routeResponse.render('pages/index', 
 						{
-							msg,lbcData,ref						
+							msg: msg,lbcData,ref,
+								data: {
+									lbcData,
+									maData,
+									msg
+								}					
 						}
 
 											)	
-						console.log('affaire; ', msg)
+						console.log('affaire: ', msg)
 					}
 				}
 				else{console.log("Erreur lors de l'estimation de MA")}

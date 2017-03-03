@@ -6,23 +6,31 @@
 
 <head>
     <link rel="stylesheet" href="/assets/css/style.css" />
-    <title> WS3 - Comparatif LeBonCoin </title>
+    <title> WS3 - Comparatif LBC Roxanne</title>
 </head>
 
 <body> 
 
     <div id="shape">
     <h1> Comparateur de biens immobiliers </h1>
-    <p> Lien LeBonCoin: </p>
+ 
 <form action="scrape" method="post">
+			
     <button id="comparer"> Comparer </button>
-    <input class="model" type="text" name="lien" id="lien" placeholder="Site"/>
+    <input class="model" type="text" name="lien" id="lien" placeholder="Lien LeBonCoin"/>
 
+<% if (msg!="") {%>
+								
+								<p> Estimation du bien : <%= data.maData.priceHouse * data.lbcData.surface %> €</p>
+								<p> Prix du bien: <%= data.lbcData.price %> €</p>
+								<p> <%= msg %> </p>
 
+								<%} else {%>
+								<p> <%= msg %> </p>
+					<% }%>
+					
+				
 
- <!--   <p> Verdict :
-<!--%= msg %> € </p> -->
-<p> Merci de regarder la console... </p>
 </form>
 
 </div>
