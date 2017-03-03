@@ -6,6 +6,7 @@ var bodyParser=require('body-parser');
 
 //creating a new express server -> express est un module pour le créer
 var app = express();
+var msg;
 
 //setting EJS as the templating engine -> template
 app.set( 'view engine', 'ejs' );
@@ -13,9 +14,7 @@ app.set( 'view engine', 'ejs' );
 //setting the 'assets' directory as our static assets dir (css, js, img, etc...)
 app.use( '/assets', express.static( 'assets' ) );
 
-//makes the server respond to the '/' route and serving the 'home.ejs' template in the 'views' directory
-//page d'accueil qui s'affiche par défaut
-//function est anonyme, utilisée par souci de performance (+ rapide). req=requete, res=reponse ( qui renvoie à la page d'accueil)
+
 app.get( '/', function ( req, res ) {
 res.render(__dirname+'/views/pages/index')
 });
@@ -30,18 +29,17 @@ app.post('/scrape',function(req,res){
 
     if(url!="")  //récupère url qu'on analyse
 	{ 
-	   getLBCData(url,res,getMAEstimation) //geetMAE fn call back qui s'execute une fois que getLBCData est executée
+	   getLBCData(url,res,getMAEstimation) //getMAE fn call back qui s'execute une fois que getLBCData est executée
     }
     else
     { //si url est pas rempli
-    	console.log("on est pas bon")
+    	console.log("erreur")
        res.render('pages/index', { 
           error:'Url is empty'
           }); //j'ai un répertoire page avec index.html
      }
 
-    // res.render( 'home', {
-    //     message: 'The Home Page!'
+    
 });
    
 
@@ -52,7 +50,8 @@ function getLBCData(lbcUrl,routeResponse, callback)
 	{
 		if(!error)
 		{
-			const lcbData=parseLBCData(html);
+			let $ =cheerio.load(html);//module pour parser le document html
+            const lcbData=parseLBCData(html);
 
 			if(lbcData) //si on extrait les données, callback est appelée
 			 {
@@ -78,21 +77,64 @@ function getLBCData(lbcUrl,routeResponse, callback)
 }
 
 
+
 function parseLBCData(html)
 {
 	const $ =cheerio.load(html)
 
-	const lbcDataArray=$ ('#adview > section > section > section.properties.lineNegative > div:nth-child(7) > h2 > span.value')
+	const lbcDataArray=$('section.properties span.value')
 
-	//toutes les vleurs des noeuds "span" qui sont fils de section.properties
+	//toutes les valeurs des noeuds "span" qui sont fils de section.properties
 	//stocke dans un tableau
 	//récupérer les données à partir du tableau
 
-	return lbcData={
-		type: ( $ ( lbcDataArray )
-		        .text().replace(/\s/g, ''),10 )
 
+	return lbcData={
+		price: parseInt( $( lbcDataArray.get(0)).text().replace( /\s/g, ''),10),
+		city : $( lbcDataArray.get(1)).text().trim().toLowerCase().replace( /\_|\s/g, '-').replace(/\-\d+/,''),
+		postalCode : $( lbcDataArray.get(1)).text().trim().toLowerCase().replace(/\D|\-/g, ''),
+		type : $( lbcDataArray.get(2)).text().trim().toLowerCase(),
+		surface : parseInt( $( lbcDataArray.get(4)).text().replace(/\s/g,''),10)
 	}
+}
+
+
+function parseMAData (html) {
+	
+	const priceAppartRegex = /\bappartement\b : (\d+) €/mi
+	const priceHouseRegex = /\bmaison\b : (\d+) €/mi
+	
+	if(html)
+	{
+		const priceAppart = priceAppartRegex.exec( html ) && priceAppartRegex.exec( html ).length === 2 ? priceAppartRegex.exec( html )[1] :0
+		const priceHouse = priceHouseRegex.exec( html ) && priceHouseRegex.exec( html ).length === 2 ? priceHouseRegex.exec( html )[1] :0
+		if (priceAppart && priceHouse)
+		{
+			return maData = 
+			{
+				priceAppart,
+				priceHouse
+			}
+		}
+	}
+	
+}
+
+function isGoodDeal(lbcData,maData)
+{
+	//prix de LBC
+	const adPricePerSqM=Math.round(lbcData.price / lbcData.surface);
+	var pourcentage= Math.sign((adPricePerSqM-maData)/maData) ;
+	var affaire;
+
+console.log(adPricePerSqM)
+console.log(maData)
+	if(maData>adPricePerSqM)
+		{ affaire = pourcentage + "% en dessous du marché: BONNE AFFAIRE!"}
+	else
+		{ affaire =	pourcentage + "% au dessus du marché: MAUVAISE AFFAIRE"}
+
+	return affaire;
 }
 
 
@@ -100,32 +142,66 @@ function getMAEstimation(lbcData, routeResponse)
 {
 	if( lbcData.city && lbcData.postalCode && lbcData.surface && lbcData.price)
 	{
-		const url='https://wwww.meilleursagents.com/prix-immobilier/{city}-{postalCode}/'.replace('{city}',
-			lbcData.city.replace(/\_/g,'-') )
+		const url='https://www.meilleursagents.com/prix-immobilier/{city}-{postalCode}/'
+		.replace('{city}',lbcData.city.replace(/\_/g,'-') )
 		.replace( '{postalCode}', lbcData.postalCode);
+		
+		//console.log('MA URL: ',url)
+		
+		request( url, function(error,response, html)
+		{
+				
+				if(!error)
+				{
+				 let $ = cheerio.load(html);
 
-		console.log('MA URL: ', url)
-
-		request ( url, function (error,response, html)
-			{
-				if(!error){ let $ = cheerio.load(html);}//module pour parser le doc html (parser=analyser)}
-			}
-
+				 //console.log($('meta[name=description]').get());
+				 //console.log($('meta[name=description]').get()[0].attribs);
+				 //console.log($('meta[name=description]').get()[0].attribs.content);
+			
+					if ($ ('meta[name=description]').get().length === 1 && $( 'meta[name=description]').get()[0].attribs 
+						  && $('meta[name=description]').get()[0].attribs.content)
+				 
+				 var maData=parseMAData(html)
+				
+				//on se réfère au prix du bien
+					if(lbcData.type!=='appartement')
+					{
+						var ref = maData.priceHouse;
+					}
+					else
+					{
+						var ref = maData.priceAppart;
+					}
+			
+					if(maData.priceAppart && maData.priceHouse)
+					{
+						
+						msg = isGoodDeal(lbcData,ref);
+						
+						routeResponse.render('pages/index', 
+						{
+							msg,lbcData,ref
+							
+						}
+											)	
+						console.log('affaire; ', msg)
+					}
+				}
+				else{console.log('erreur lors du scrapping de MA')}
+		}
 		       )
 	}
-}
-
-function isGoodDeal(lbcData,maData)
-{
-	const adPricePerSqM=Math.round(lbcData.price / lbcData.surface)
-	const maPrice = lbcData.type === 'appartement' ? maData.priceAppart:maData.priceHouse
-
-	return adPricePerSqM < maPrice
-}
-
+};
 
 
 //launch the server on the 3000 port
 app.listen( 3000, function () {
     console.log( 'App listening on port 3000!' );
 });
+
+
+//mettre données dans fichier json
+//afficher données sur le site
+//comparaison
+//afficher resultat
